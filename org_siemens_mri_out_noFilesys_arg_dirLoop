@@ -1,0 +1,72 @@
+# using dcmdump, this script organizes the output of a Siemens MRI (exported without creating a file System) into subfolders accroding to:
+#
+#   - SeriesNumber (from dcm header)
+#   - SeriesDescription (from dcm header)
+#   - StudyDate (from dcm header)
+#
+# input argument: a folder that contains one folder for each scan session at the scanner 
+#                 (exported as 'Erweitert' and without 'a Dicom file system')
+#
+# output: one output folder is create for each individual combination of SeriesNumber, StudyDate and SeriesDescription
+
+
+#!/bin/bash
+
+# go to folder given as input argument
+cd $1
+
+# loop over all subfolders in $1:
+for currFolder in ./*; do
+
+    currFolder_clean="${currFolder#./}"
+
+    cd $1
+    cd $currFolder
+
+    echo "current dir:" $PWD
+    echo "------------------------------------"
+
+    fileCount=1
+    # loop over all files in the root dir:
+    for filename in *; do
+
+        # use dcmdump by hand:
+        #dcmdump /mnt/c/Users/marco/HiDrive/KKB/Pipelines/test_organize_scanner_dicom_out/1_AAhead_scout/22ULSA15.MR.Kopf_fMRI.1.1.2024.11.05.11.19.23.453.68755434.dcm -> header.txt
+
+        # write series description into variable:
+        # (install dcmdump: sudo apt install dcmtk)
+        SeriesNumber=$(dcmdump ./$filename | grep "(0020,0011)" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')    
+        StudyDate=$(dcmdump ./$filename | grep "(0008,0020)" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
+        SeriesDescription=$(dcmdump ./$filename | grep "(0008,103e)" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
+        TransmitterFrequency=$(dcmdump ./$filename | grep "(0018,9098)" | grep -oP '(?<=FD )\d+\.\d+')
+
+        
+        # check  this output before organizing into directories below
+        echo "----------------------------"
+        echo "File:" $fileCount
+        echo "current file:" $filename
+        echo "------------------"
+        echo "SeriesNumber:" $SeriesNumber
+        echo "SeriesDescription:" $SeriesDescription
+        echo "StudyDate:" $StudyDate
+        echo "TransmitterFrequency:" $TransmitterFrequency
+        echo "mkdir:" "$1"/"$currFolder_clean"/"$SeriesNumber"_"$StudyDate"_"$SeriesDescription"
+
+        fileCount=$((fileCount+1))
+
+        # organize into directories (optional): 
+        if [ 1 -eq 1 ]; then
+            
+            # create a folder for the current directory in case it doe not exist yet
+            mkdir -p "$1"/"$currFolder_clean"/"$SeriesNumber"_"$StudyDate"_"$SeriesDescription"
+
+            # move current file into its corresponding folder
+            mv $filename "$1"/"$currFolder_clean"/"$SeriesNumber"_"$StudyDate"_"$SeriesDescription"
+
+        fi
+
+    done
+
+
+done
+
