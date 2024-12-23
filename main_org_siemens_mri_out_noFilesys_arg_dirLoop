@@ -31,7 +31,7 @@ for currFolder in ./*; do
     for filename in *; do
 
         # use dcmdump by hand:
-        #dcmdump /mnt/c/Users/marco/HiDrive/KKB/Pipelines/test_organize_scanner_dicom_out/1_AAhead_scout/22ULSA15.MR.Kopf_fMRI.1.1.2024.11.05.11.19.23.453.68755434.dcm -> header.txt
+        #dcmdump /path/to/dicom/dicom_file.dcm -> header.txt
 
         # write series description into variable:
         # (install dcmdump: sudo apt install dcmtk)
